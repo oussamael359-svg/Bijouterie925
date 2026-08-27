@@ -33,7 +33,7 @@ export default function App() {
           if (cols.length >= 2) {
             const name = cols[0]?.replace(/^\"|\"$/g, '').trim() || '';
             const price = cols[1]?.replace(/^\"|\"$/g, '').trim() || '';
-            const image = cols[2]?.replace(/^\"|\"$/g, '').trim() || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500';
+            const image = cols[2]?.replace().trim() || 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=500';
             const rawSizes = cols[3]?.replace(/^\"|\"$/g, '').trim() || '';
             const sizes = rawSizes ? rawSizes.split(',').map(s => s.trim()) : [];
             const category = cols[4]?.replace(/^\"|\"$/g, '').trim() || 'عام';
