@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS85x-I1IFAW3C30y5iA3-1k6Kx0/pub?output=csv';
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/1KyfGld5_i55aXg8-DhYRWYskuTnhhcvfJFatc9q4HUo/pub?output=csv';
 
 export default function App() {
   const [products, setProducts] = useState([]);
@@ -8,7 +8,7 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState('');
   const [activeCategory, setActiveCategory] = useState('الكل');
 
-  // بيانات النموذج
+  // بيانات نموذج الطلب
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
@@ -29,8 +29,8 @@ export default function App() {
           const sizes = rawSizes ? rawSizes.split(',').map(s => s.trim()) : [];
           const category = cols[4]?.replace(/^\"|\"$/g, '').trim() || 'عام';
 
-          // ما كيتزاد للمتجر غير المنتج اللي فيه رابط صورة عامر وصحيح
-          if (image !== '' && image.startsWith('http')) {
+          // كيضيف المنتجات اللي فيها اسم عامر فقط (وبلا ما يدير صورة افتراضية)
+          if (name !== '') {
             data.push({ _id: String(i), name, price, image, sizes, category });
           }
         }
@@ -76,7 +76,7 @@ export default function App() {
             <p>صاحب الحساب: <span className="font-bold">Bijouterie 925</span></p>
             <div className="flex justify-between items-center bg-gray-800 p-2 rounded mt-2">
               <span className="font-mono text-xs">45 0000000000000000 780 230</span>
-              <button onClick={() => navigator.clipboard.writeText('45 0000000000000000 780 230')} className="bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">نسخ</button>
+              <button type="button" onClick={() => navigator.clipboard.writeText('45 0000000000000000 780 230')} className="bg-yellow-500 text-black text-xs px-2 py-1 rounded font-bold">نسخ</button>
             </div>
           </div>
 
@@ -111,6 +111,7 @@ export default function App() {
             {categories.map(cat => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setActiveCategory(cat)}
                 className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${
                   activeCategory === cat ? 'bg-yellow-500 text-black' : 'bg-gray-800 text-gray-300'
@@ -133,7 +134,9 @@ export default function App() {
                   selectedProduct?._id === product._id ? 'border-yellow-500 bg-gray-800' : 'border-gray-800 bg-gray-900'
                 }`}
               >
-                <img src={product.image} alt={product.name} className="w-full h-20 object-cover rounded-lg mb-2" />
+                {product.image && (
+                  <img src={product.image} alt={product.name} className="w-full h-20 object-cover rounded-lg mb-2" />
+                )}
                 <h3 className="font-bold text-xs truncate">{product.name}</h3>
                 <p className="text-yellow-500 text-xs font-bold mt-1">{product.price}</p>
               </div>
@@ -142,7 +145,9 @@ export default function App() {
 
           {selectedProduct && (
             <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
-              <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-48 object-cover rounded-lg mb-3" />
+              {selectedProduct.image && (
+                <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-48 object-cover rounded-lg mb-3" />
+              )}
               <h3 className="font-bold">{selectedProduct.name}</h3>
               <p className="text-yellow-500 font-bold mt-1">{selectedProduct.price}</p>
               
