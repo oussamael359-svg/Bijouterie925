@@ -1,43 +1,19 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Copy, CheckCircle, Send, Upload, X, ShieldCheck, Truck } from 'lucide-react';
+import { productsData } from './data';
+import { Copy, CheckCircle, Send, Upload, X, ShieldCheck, Truck } from 'lucide-react';
 
 export default function App() {
-  // معلومات الحساب البنكي
   const bankDetails = {
-    bankName: "CIH Bank",
-    accountHolder: "Bijouterie 925",
-    rib: "230 780 0000000000000000 45"
+    bankName: 'CIH Bank',
+    accountHolder: 'Bijouterie 925',
+    rib: '230 780 0000000000000000 45'
   };
 
-  const whatsappNumber = "212600000000"; // ضَع رقم الواتساب الخاص بك هنا
+  const whatsappNumber = '212600000000';
 
-  // قائمة المنتجات (مقتراحات أولية لتجربة الديكور)
-  const products = [
-    {
-      id: 1,
-      name: "خاتم فضة 925 ملكي بحجر طبيعي",
-      price: "190 DH",
-      image: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600",
-      sizes: ["52 (S)", "54 (M)", "56 (L)", "58 (XL)"]
-    },
-    {
-      id: 2,
-      name: "سلسلة فضة 925 مع قلادة أنيقة",
-      price: "250 DH",
-      image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=600",
-      sizes: ["40 cm", "45 cm", "50 cm"]
-    },
-    {
-      id: 3,
-      name: "سوار (دمليج) فضة 925 عصري",
-      price: "220 DH",
-      image: "https://images.unsplash.com/photo-1611591475140-62e584f74d0e?w=600",
-      sizes: ["16 cm", "18 cm", "20 cm"]
-    }
-  ];
-
-  const [selectedProduct, setSelectedProduct] = useState(products[0]);
-  const [selectedSize, setSelectedSize] = useState(products[0].sizes[0]);
+  const [products] = useState(productsData);
+  const [selectedProduct, setSelectedProduct] = useState(productsData[0]);
+  const [selectedSize, setSelectedSize] = useState(productsData[0]?.sizes[0] || '');
   const [formData, setFormData] = useState({ fullName: '', phone: '', city: '', address: '' });
   const [receiptFile, setReceiptFile] = useState(null);
   const [receiptPreview, setReceiptPreview] = useState(null);
@@ -45,7 +21,7 @@ export default function App() {
 
   const handleProductSelect = (product) => {
     setSelectedProduct(product);
-    setSelectedSize(product.sizes[0]);
+    setSelectedSize(product.sizes ? product.sizes[0] : '');
   };
 
   const handleImageChange = (e) => {
@@ -64,27 +40,13 @@ export default function App() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const message = `*طلب جديد - Bijouterie 925* 💍
---------------------------------
-*المنتج:* ${selectedProduct.name}
-*المقاس المحدد:* ${selectedSize}
-*الثمن:* ${selectedProduct.price}
-
-*معلومات الزبون:*
-• *الاسم:* ${formData.fullName}
-• *الهاتف:* ${formData.phone}
-• *المدينة:* ${formData.city}
-• *العنوان:* ${formData.address}
---------------------------------
-*طريقة الدفع:* تحويل بنكي (RIB)
-${receiptFile ? '_ملاحظة: قمت بإرفاق صورة وصل التحويل وسأرسلها لكم الآن فالمحادثة._' : '_سأقوم بإرفاق صورة الوصل هنا فالمحادثة لتأكيد الطلب._'}`;
+    const message = `*طلب جديد - Bijouterie 925* 💍\n--------------------------------\n*المنتج:* ${selectedProduct.name}\n*المقاس المحدد:* ${selectedSize}\n*الثمن:* ${selectedProduct.price}\n\n*معلومات الزبون:*\n• *الاسم:* ${formData.fullName}\n• *الهاتف:* ${formData.phone}\n• *المدينة:* ${formData.city}\n• *العنوان:* ${formData.address}\n--------------------------------\n*طريقة الدفع:* تحويل بنكي (RIB)\n${receiptFile ? '_ملاحظة: قمت بإرفاق صورة وصل التحويل وسأرسلها لكم الآن فالمحادثة._' : '_سأقوم بإرفاق صورة الوصل هنا فالمحادثة لتأكيد الطلب._'}`;
 
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100 dir-rtl font-sans pb-12">
-      {/* Header أنيق بلون دكن وفضي */}
       <header className="bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 py-4 px-6 border-b border-slate-800 text-center">
         <h1 className="text-3xl font-extrabold tracking-wider bg-gradient-to-r from-slate-200 via-amber-200 to-slate-400 bg-clip-text text-transparent">
           BIJOUTERIE 925
@@ -92,24 +54,20 @@ ${receiptFile ? '_ملاحظة: قمت بإرفاق صورة وصل التحوي
         <p className="text-xs text-slate-400 mt-1">عالم الفضة الفاخرة والأناقة</p>
       </header>
 
-      {/* شريط الميزات */}
       <div className="bg-slate-800/50 py-2 border-b border-slate-800 text-xs text-slate-300 flex justify-center gap-6">
         <span className="flex items-center gap-1"><ShieldCheck size={14} className="text-amber-400"/> فضة 925 مئة بالمئة</span>
         <span className="flex items-center gap-1"><Truck size={14} className="text-amber-400"/> توصيل لجميع المدن</span>
       </div>
 
       <main className="max-w-4xl mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        {/* قسم المنتجات والمقاسات */}
         <div className="space-y-6">
           <h2 className="text-sm font-bold tracking-wide text-amber-400 uppercase">اختر قطعة المجوهرات:</h2>
-          
           <div className="grid grid-cols-3 gap-3">
             {products.map((p) => (
               <div 
-                key={p.id}
+                key={p._id}
                 onClick={() => handleProductSelect(p)}
-                className={`cursor-pointer rounded-xl p-2 bg-slate-800 border transition duration-200 text-center ${selectedProduct.id === p.id ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-slate-700 opacity-70 hover:opacity-100'}`}
+                className={`cursor-pointer rounded-xl p-2 bg-slate-800 border transition duration-200 text-center ${selectedProduct._id === p._id ? 'border-amber-400 ring-2 ring-amber-400/20' : 'border-slate-700 opacity-70 hover:opacity-100'}`}
               >
                 <img src={p.image} alt={p.name} className="h-20 w-full object-cover rounded-lg mb-2" />
                 <p className="text-xs font-medium text-slate-200 truncate">{p.name}</p>
@@ -118,41 +76,37 @@ ${receiptFile ? '_ملاحظة: قمت بإرفاق صورة وصل التحوي
             ))}
           </div>
 
-          {/* تفاصيل المنتج المحدد */}
           <div className="bg-slate-800/80 p-5 rounded-2xl border border-slate-700 shadow-xl">
             <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-60 object-cover rounded-xl mb-4 border border-slate-700" />
             <h3 className="text-xl font-bold text-slate-100 mb-1">{selectedProduct.name}</h3>
             <p className="text-amber-400 text-xl font-bold mb-4">{selectedProduct.price}</p>
 
-            {/* إختيار المقاس */}
-            <div>
-              <label className="block text-xs font-semibold mb-2 text-slate-300">المقاس المتوفر:</label>
-              <div className="flex flex-wrap gap-2">
-                {selectedProduct.sizes.map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setSelectedSize(size)}
-                    className={`px-3.5 py-1.5 text-xs font-bold rounded-lg border transition ${selectedSize === size ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-lg' : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-500'}`}
-                  >
-                    {size}
-                  </button>
-                ))}
+            {selectedProduct.sizes && (
+              <div>
+                <label className="block text-xs font-semibold mb-2 text-slate-300">المقاس المتوفر:</label>
+                <div className="flex flex-wrap gap-2">
+                  {selectedProduct.sizes.map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setSelectedSize(size)}
+                      className={`px-3.5 py-1.5 text-xs font-bold rounded-lg border transition ${selectedSize === size ? 'bg-amber-500 text-slate-950 border-amber-400 shadow-lg' : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-500'}`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* قسم الدفع بالـ RIB واستمارة الشراء */}
         <div className="bg-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-xl self-start">
           <h2 className="text-lg font-bold text-slate-100 mb-4">إتمام الطلب (الدفع عبر الـ RIB)</h2>
-
-          {/* تفاصيل الحساب البنكي */}
           <div className="bg-slate-900/90 border border-amber-500/30 p-4 rounded-xl mb-6">
             <p className="text-xs font-bold text-amber-400 mb-1">معلومات الحساب البنكي للتحويل:</p>
             <p className="text-xs text-slate-300">البنك: <span className="text-white font-semibold">{bankDetails.bankName}</span></p>
             <p className="text-xs text-slate-300 mb-2">صاحب الحساب: <span className="text-white font-semibold">{bankDetails.accountHolder}</span></p>
-            
             <div className="flex justify-between items-center bg-slate-950 p-2.5 rounded-lg border border-slate-700">
               <span className="font-mono text-xs font-bold text-slate-200 tracking-wider">{bankDetails.rib}</span>
               <button onClick={copyRib} className="bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs px-2.5 py-1 rounded font-bold flex items-center gap-1 transition">
@@ -162,13 +116,11 @@ ${receiptFile ? '_ملاحظة: قمت بإرفاق صورة وصل التحوي
             </div>
           </div>
 
-          {/* استمارة المعلومات */}
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">الاسم الكامل *</label>
               <input type="text" required value={formData.fullName} onChange={(e) => setFormData({...formData, fullName: e.target.value})} className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100 outline-none focus:border-amber-400 transition" placeholder="مثال: يوسف العلمي" />
             </div>
-
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-medium text-slate-300 mb-1">رقم الهاتف *</label>
@@ -179,16 +131,12 @@ ${receiptFile ? '_ملاحظة: قمت بإرفاق صورة وصل التحوي
                 <input type="text" required value={formData.city} onChange={(e) => setFormData({...formData, city: e.target.value})} className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100 outline-none focus:border-amber-400" placeholder="أكادير" />
               </div>
             </div>
-
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">العنوان الكامل *</label>
               <input type="text" required value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} className="w-full p-2.5 bg-slate-900 border border-slate-700 rounded-lg text-sm text-slate-100 outline-none focus:border-amber-400" placeholder="الحي، الشارع، رقم المنزل" />
             </div>
-
-            {/* إرفاق الوصل */}
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">إرفاق صورة وصل التحويل (اختياري)</label>
-              {!receiptPreview ? (
                 <label className="flex items-center justify-center border border-dashed border-slate-600 p-3 rounded-lg cursor-pointer bg-slate-900 hover:bg-slate-900/80 text-xs text-slate-400 gap-2 transition">
                   <Upload size={16} />
                   اختر صورة الوصل من تليفونك
@@ -201,15 +149,14 @@ ${receiptFile ? '_ملاحظة: قمت بإرفاق صورة وصل التحوي
                 </div>
               )}
             </div>
-
             <button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl flex items-center justify-center gap-2 text-sm mt-4 shadow-lg transition duration-200">
               <Send size={16} />
               إرسال الطلب عبر الواتساب
             </button>
           </form>
         </div>
-
       </main>
     </div>
   );
 }
+
