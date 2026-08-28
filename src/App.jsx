@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import Papa from 'papaparse';
 
-// حط الرابط الجديد اللي خديتي من Publish to web هنا
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS85x-I1IFAW3C30y5iA3-1k6Kx0/pub?output=csv';
+// رابط Google Sheets المباشر
+const SHEET_ID = '1KyfGld5_i55aXg8-DhYRWYskuTnhhcvfJFatc9q4HUo';
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv`;
 
 export default function App() {
   const [products, setProducts] = useState([]);
@@ -15,38 +17,45 @@ export default function App() {
   const [address, setAddress] = useState('');
 
   useEffect(() => {
-    fetch(CSV_URL)
-      .then(res => res.text())
-      .then(csvText => {
-        // حماية: إذا رجع كود JS أو HTML من جوجل كيتجاهلو
-        if (csvText.includes('<!DOCTYPE') || csvText.includes('function(') || csvText.includes('var ')) {
-          console.error("Google Sheets returned invalid CSV format");
-          return;
-        }
+    Papa.parse(CSV_URL, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const cleanData = results.data
+          .filter(row => {
+            const name = row.name || row.Name || row['اسم المنتج'] || '';
+            // حماية حارمة: كيتأكد بلي الاسم ماشي كود JS
+            return name && !name.includes('function') && !name.includes('{') && !name.includes('var ');
+          })
+          .map((row, idx) => {
+            const name = row.name || row.Name || '';
+            const price = row.price || row.Price || '';
+            const image = row.image || row.Image || '';
+            const rawSizes = row.sizes || row.Sizes || '';
+            const category = row.category || row.Category || 'عام';
+            const sizes = rawSizes ? String(rawSizes).split(',').map(s => s.trim()) : [];
 
-        const lines = csvText.split('\n').filter(line => line.trim() !== '');
-        const data = [];
-        for (let i = 1; i < lines.length; i++) {
-          const cols = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-          const name = cols[0]?.replace(/^\"|\"$/g, '').trim() || '';
-          const price = cols[1]?.replace(/^\"|\"$/g, '').trim() || '';
-          const image = cols[2]?.replace(/^\"|\"$/g, '').trim() || '';
-          const rawSizes = cols[3]?.replace(/^\"|\"$/g, '').trim() || '';
-          const sizes = rawSizes ? rawSizes.split(',').map(s => s.trim()) : [];
-          const category = cols[4]?.replace(/^\"|\"$/g, '').trim() || 'عام';
+            return {
+              _id: String(idx + 1),
+              name,
+              price,
+              image,
+              sizes,
+              category
+            };
+          });
 
-          // تصفية حارمة: خاص يكون اسم منطقي وما فيش كود
-          if (name && !name.includes('function') && !name.includes('{')) {
-            data.push({ _id: String(i), name, price, image, sizes, category });
-          }
+        setProducts(cleanData);
+        if (cleanData.length > 0) {
+          setSelectedProduct(cleanData[0]);
+          setSelectedSize(cleanData[0].sizes[0] || '');
         }
-        setProducts(data);
-        if (data.length > 0) {
-          setSelectedProduct(data[0]);
-          setSelectedSize(data[0].sizes[0] || '');
-        }
-      })
-      .catch(err => console.error(err));
+      },
+      error: (err) => {
+        console.error("Error fetching CSV:", err);
+      }
+    });
   }, []);
 
   const categories = ['الكل', ...new Set(products.map(p => p.category))];
@@ -128,57 +137,65 @@ export default function App() {
             ))}
           </div>
 
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {filteredProducts.map(product => (
-              <div
-                key={product._id}
-                onClick={() => {
-                  setSelectedProduct(product);
-                  setSelectedSize(product.sizes[0] || '');
-                }}
-                className={`border p-2 rounded-xl cursor-pointer transition ${
-                  selectedProduct?._id === product._id ? 'border-yellow-500 bg-gray-800' : 'border-gray-800 bg-gray-900'
-                }`}
-              >
-                {product.image && product.image.startsWith('http') ? (
-                  <img src={product.image} alt={product.name} className="w-full h-20 object-cover rounded-lg mb-2" />
-                ) : (
-                  <div className="w-full h-20 bg-gray-800 rounded-lg mb-2 flex items-center justify-center text-xs text-gray-500">لا توجد صورة</div>
-                )}
-                <h3 className="font-bold text-xs truncate">{product.name}</h3>
-                <p className="text-yellow-500 text-xs font-bold mt-1">{product.price}</p>
-              </div>
-            ))}
-          </div>
-
-          {selectedProduct && (
-            <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
-              {selectedProduct.image && selectedProduct.image.startsWith('http') && (
-                <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-48 object-cover rounded-lg mb-3" />
-              )}
-              <h3 className="font-bold">{selectedProduct.name}</h3>
-              <p className="text-yellow-500 font-bold mt-1">{selectedProduct.price}</p>
-              
-              {selectedProduct.sizes.length > 0 && (
-                <div className="mt-3">
-                  <span className="text-xs text-gray-400 block mb-1">المقاسات المتاحة:</span>
-                  <div className="flex gap-2">
-                    {selectedProduct.sizes.map(size => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => setSelectedSize(size)}
-                        className={`px-2 py-1 rounded text-xs ${
-                          selectedSize === size ? 'bg-yellow-500 text-black font-bold' : 'bg-gray-800 text-gray-400'
-                        }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
+          {filteredProducts.length === 0 ? (
+            <div className="text-center py-10 bg-gray-900 rounded-xl border border-gray-800 text-gray-400 text-sm">
+              جاري تحميل المنتجات أو لا توجد منتجات حالياً...
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-3 gap-3 mb-6">
+                {filteredProducts.map(product => (
+                  <div
+                    key={product._id}
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setSelectedSize(product.sizes[0] || '');
+                    }}
+                    className={`border p-2 rounded-xl cursor-pointer transition ${
+                      selectedProduct?._id === product._id ? 'border-yellow-500 bg-gray-800' : 'border-gray-800 bg-gray-900'
+                    }`}
+                  >
+                    {product.image && product.image.startsWith('http') ? (
+                      <img src={product.image} alt={product.name} className="w-full h-20 object-cover rounded-lg mb-2" />
+                    ) : (
+                      <div className="w-full h-20 bg-gray-800 rounded-lg mb-2 flex items-center justify-center text-[10px] text-gray-500">لا توجد صورة</div>
+                    )}
+                    <h3 className="font-bold text-xs truncate">{product.name}</h3>
+                    <p className="text-yellow-500 text-xs font-bold mt-1">{product.price}</p>
                   </div>
+                ))}
+              </div>
+
+              {selectedProduct && (
+                <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+                  {selectedProduct.image && selectedProduct.image.startsWith('http') && (
+                    <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-48 object-cover rounded-lg mb-3" />
+                  )}
+                  <h3 className="font-bold">{selectedProduct.name}</h3>
+                  <p className="text-yellow-500 font-bold mt-1">{selectedProduct.price}</p>
+                  
+                  {selectedProduct.sizes.length > 0 && (
+                    <div className="mt-3">
+                      <span className="text-xs text-gray-400 block mb-1">المقاسات المتاحة:</span>
+                      <div className="flex gap-2">
+                        {selectedProduct.sizes.map(size => (
+                          <button
+                            key={size}
+                            type="button"
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-2 py-1 rounded text-xs ${
+                              selectedSize === size ? 'bg-yellow-500 text-black font-bold' : 'bg-gray-800 text-gray-400'
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
+            </>
           )}
         </div>
 
