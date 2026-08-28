@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
-const CSV_URL = 'https://docs.google.com/spreadsheets/d/1KyfGld5_i55aXg8-DhYRWYskuTnhhcvfJFatc9q4HUo/pub?output=csv';
+// حط الرابط الجديد اللي خديتي من Publish to web هنا
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS85x-I1IFAW3C30y5iA3-1k6Kx0/pub?output=csv';
 
 export default function App() {
   const [products, setProducts] = useState([]);
@@ -8,7 +9,6 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState('');
   const [activeCategory, setActiveCategory] = useState('الكل');
 
-  // بيانات نموذج الطلب
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
@@ -18,6 +18,12 @@ export default function App() {
     fetch(CSV_URL)
       .then(res => res.text())
       .then(csvText => {
+        // حماية: إذا رجع كود JS أو HTML من جوجل كيتجاهلو
+        if (csvText.includes('<!DOCTYPE') || csvText.includes('function(') || csvText.includes('var ')) {
+          console.error("Google Sheets returned invalid CSV format");
+          return;
+        }
+
         const lines = csvText.split('\n').filter(line => line.trim() !== '');
         const data = [];
         for (let i = 1; i < lines.length; i++) {
@@ -29,8 +35,8 @@ export default function App() {
           const sizes = rawSizes ? rawSizes.split(',').map(s => s.trim()) : [];
           const category = cols[4]?.replace(/^\"|\"$/g, '').trim() || 'عام';
 
-          // كيضيف المنتجات اللي فيها اسم عامر فقط (وبلا ما يدير صورة افتراضية)
-          if (name !== '') {
+          // تصفية حارمة: خاص يكون اسم منطقي وما فيش كود
+          if (name && !name.includes('function') && !name.includes('{')) {
             data.push({ _id: String(i), name, price, image, sizes, category });
           }
         }
@@ -39,7 +45,8 @@ export default function App() {
           setSelectedProduct(data[0]);
           setSelectedSize(data[0].sizes[0] || '');
         }
-      });
+      })
+      .catch(err => console.error(err));
   }, []);
 
   const categories = ['الكل', ...new Set(products.map(p => p.category))];
@@ -58,7 +65,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#111827] text-white p-4 font-sans dir-rtl">
-      {/* Header */}
       <header className="text-center py-6 border-b border-gray-800">
         <h1 className="text-3xl font-bold tracking-wider text-yellow-500">BIJOUTERIE 925</h1>
         <p className="text-gray-400 text-sm mt-1">عالم الفضة الفاخرة والأناقة</p>
@@ -134,8 +140,10 @@ export default function App() {
                   selectedProduct?._id === product._id ? 'border-yellow-500 bg-gray-800' : 'border-gray-800 bg-gray-900'
                 }`}
               >
-                {product.image && (
+                {product.image && product.image.startsWith('http') ? (
                   <img src={product.image} alt={product.name} className="w-full h-20 object-cover rounded-lg mb-2" />
+                ) : (
+                  <div className="w-full h-20 bg-gray-800 rounded-lg mb-2 flex items-center justify-center text-xs text-gray-500">لا توجد صورة</div>
                 )}
                 <h3 className="font-bold text-xs truncate">{product.name}</h3>
                 <p className="text-yellow-500 text-xs font-bold mt-1">{product.price}</p>
@@ -145,7 +153,7 @@ export default function App() {
 
           {selectedProduct && (
             <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
-              {selectedProduct.image && (
+              {selectedProduct.image && selectedProduct.image.startsWith('http') && (
                 <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-48 object-cover rounded-lg mb-3" />
               )}
               <h3 className="font-bold">{selectedProduct.name}</h3>
