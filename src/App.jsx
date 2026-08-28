@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 
-// رابط Google Sheets المباشر
 const SHEET_ID = '1KyfGld5_i55aXg8-DhYRWYskuTnhhcvfJFatc9q4HUo';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/pub?output=csv`;
 
@@ -11,10 +10,12 @@ export default function App() {
   const [selectedSize, setSelectedSize] = useState('');
   const [activeCategory, setActiveCategory] = useState('الكل');
 
+  // بيانات نموذج الطلب
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
+  const [recuImage, setRecuImage] = useState(null);
 
   useEffect(() => {
     Papa.parse(CSV_URL, {
@@ -25,8 +26,8 @@ export default function App() {
         const cleanData = results.data
           .filter(row => {
             const name = row.name || row.Name || row['اسم المنتج'] || '';
-            // حماية حارمة: كيتأكد بلي الاسم ماشي كود JS
-            return name && !name.includes('function') && !name.includes('{') && !name.includes('var ');
+            const image = row.image || row.Image || '';
+            return name && image && !name.includes('function') && !name.includes('{');
           })
           .map((row, idx) => {
             const name = row.name || row.Name || '';
@@ -36,14 +37,7 @@ export default function App() {
             const category = row.category || row.Category || 'عام';
             const sizes = rawSizes ? String(rawSizes).split(',').map(s => s.trim()) : [];
 
-            return {
-              _id: String(idx + 1),
-              name,
-              price,
-              image,
-              sizes,
-              category
-            };
+            return { _id: String(idx + 1), name, price, image, sizes, category };
           });
 
         setProducts(cleanData);
@@ -51,9 +45,6 @@ export default function App() {
           setSelectedProduct(cleanData[0]);
           setSelectedSize(cleanData[0].sizes[0] || '');
         }
-      },
-      error: (err) => {
-        console.error("Error fetching CSV:", err);
       }
     });
   }, []);
@@ -67,7 +58,7 @@ export default function App() {
     e.preventDefault();
     if (!selectedProduct) return;
     
-    const message = `السلام عليكم، بغيت نطلب:\n- المنتج: ${selectedProduct.name}\n- الثمن: ${selectedProduct.price}\n- المقاس: ${selectedSize || 'غير محدد'}\n\nبيانات الزبون:\n- الاسم: ${fullName}\n- الهاتف: ${phone}\n- المدينة: ${city}\n- العنوان: ${address}`;
+    const message = `السلام عليكم، بغيت نطلب:\n- المنتج: ${selectedProduct.name}\n- الثمن: ${selectedProduct.price}\n- المقاس: ${selectedSize || 'غير محدد'}\n\nبيانات الزبون:\n- الاسم: ${fullName}\n- الهاتف: ${phone}\n- المدينة: ${city}\n- العنوان: ${address}\n\n- حالة وصل التحويل (Reçu): ${recuImage ? 'تم إرفاق الوصل' : 'لم يتم إرفاقه بعد'}`;
     const whatsappUrl = `https://wa.me/212600000000?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
@@ -113,6 +104,17 @@ export default function App() {
               <input required type="text" value={address} onChange={e => setAddress(e.target.value)} placeholder="الحي، الشارع، رقم المنزل" className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2.5 text-sm focus:outline-none focus:border-yellow-500" />
             </div>
 
+            {/* الخانة الخاصة بإرفاق وصل الدفع (Reçu) */}
+            <div>
+              <label className="text-xs text-yellow-500 block mb-1 font-bold">إرفاق وصل التحويل البنكي (Reçu):</label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={e => setRecuImage(e.target.files[0])} 
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs text-gray-300 file:ml-2 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-bold file:bg-yellow-500 file:text-black hover:file:bg-yellow-400" 
+              />
+            </div>
+
             <button type="submit" className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl transition mt-4">
               إرسال الطلب عبر WhatsApp
             </button>
@@ -137,65 +139,51 @@ export default function App() {
             ))}
           </div>
 
-          {filteredProducts.length === 0 ? (
-            <div className="text-center py-10 bg-gray-900 rounded-xl border border-gray-800 text-gray-400 text-sm">
-              جاري تحميل المنتجات أو لا توجد منتجات حالياً...
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-3 gap-3 mb-6">
-                {filteredProducts.map(product => (
-                  <div
-                    key={product._id}
-                    onClick={() => {
-                      setSelectedProduct(product);
-                      setSelectedSize(product.sizes[0] || '');
-                    }}
-                    className={`border p-2 rounded-xl cursor-pointer transition ${
-                      selectedProduct?._id === product._id ? 'border-yellow-500 bg-gray-800' : 'border-gray-800 bg-gray-900'
-                    }`}
-                  >
-                    {product.image && product.image.startsWith('http') ? (
-                      <img src={product.image} alt={product.name} className="w-full h-20 object-cover rounded-lg mb-2" />
-                    ) : (
-                      <div className="w-full h-20 bg-gray-800 rounded-lg mb-2 flex items-center justify-center text-[10px] text-gray-500">لا توجد صورة</div>
-                    )}
-                    <h3 className="font-bold text-xs truncate">{product.name}</h3>
-                    <p className="text-yellow-500 text-xs font-bold mt-1">{product.price}</p>
-                  </div>
-                ))}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {filteredProducts.map(product => (
+              <div
+                key={product._id}
+                onClick={() => {
+                  setSelectedProduct(product);
+                  setSelectedSize(product.sizes[0] || '');
+                }}
+                className={`border p-2 rounded-xl cursor-pointer transition ${
+                  selectedProduct?._id === product._id ? 'border-yellow-500 bg-gray-800' : 'border-gray-800 bg-gray-900'
+                }`}
+              >
+                <img src={product.image} alt={product.name} className="w-full h-20 object-cover rounded-lg mb-2" />
+                <h3 className="font-bold text-xs truncate">{product.name}</h3>
+                <p className="text-yellow-500 text-xs font-bold mt-1">{product.price}</p>
               </div>
+            ))}
+          </div>
 
-              {selectedProduct && (
-                <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
-                  {selectedProduct.image && selectedProduct.image.startsWith('http') && (
-                    <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-48 object-cover rounded-lg mb-3" />
-                  )}
-                  <h3 className="font-bold">{selectedProduct.name}</h3>
-                  <p className="text-yellow-500 font-bold mt-1">{selectedProduct.price}</p>
-                  
-                  {selectedProduct.sizes.length > 0 && (
-                    <div className="mt-3">
-                      <span className="text-xs text-gray-400 block mb-1">المقاسات المتاحة:</span>
-                      <div className="flex gap-2">
-                        {selectedProduct.sizes.map(size => (
-                          <button
-                            key={size}
-                            type="button"
-                            onClick={() => setSelectedSize(size)}
-                            className={`px-2 py-1 rounded text-xs ${
-                              selectedSize === size ? 'bg-yellow-500 text-black font-bold' : 'bg-gray-800 text-gray-400'
-                            }`}
-                          >
-                            {size}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+          {selectedProduct && (
+            <div className="bg-gray-900 p-4 rounded-xl border border-gray-800">
+              <img src={selectedProduct.image} alt={selectedProduct.name} className="w-full h-48 object-cover rounded-lg mb-3" />
+              <h3 className="font-bold">{selectedProduct.name}</h3>
+              <p className="text-yellow-500 font-bold mt-1">{selectedProduct.price}</p>
+              
+              {selectedProduct.sizes.length > 0 && (
+                <div className="mt-3">
+                  <span className="text-xs text-gray-400 block mb-1">المقاسات المتاحة:</span>
+                  <div className="flex gap-2">
+                    {selectedProduct.sizes.map(size => (
+                      <button
+                        key={size}
+                        type="button"
+                        onClick={() => setSelectedSize(size)}
+                        className={`px-2 py-1 rounded text-xs ${
+                          selectedSize === size ? 'bg-yellow-500 text-black font-bold' : 'bg-gray-800 text-gray-400'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
-            </>
+            </div>
           )}
         </div>
 
