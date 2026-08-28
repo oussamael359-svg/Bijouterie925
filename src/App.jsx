@@ -127,7 +127,10 @@ const getImagesFromRow = (row) => {
 // ===============================
 
   export default function App() {
-  if (window.location.pathname === '/admin') return <Admin />;
+   const [showAdmin, setShowAdmin] = useState(false);
+
+  if (showAdmin) return <Admin />;
+    if (window.location.pathname === '/admin') return <Admin />;
   const [products, setProducts] = useState([]);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -1124,7 +1127,14 @@ ${
         </p>
 
       </footer>
-
+<footer style={{ textAlign: 'center', padding: '20px', marginTop: '40px' }}>
+    <button 
+      onClick={() => setShowAdmin(true)}
+      style={{ background: 'transparent', color: '#666', border: 'none', cursor: 'pointer', fontSize: '12px' }}
+    >
+      ⚙️ لوحة التحكم
+    </button>
+  </footer>
     </div>
   );
 }
