@@ -130,7 +130,6 @@ const getImagesFromRow = (row) => {
    const [showAdmin, setShowAdmin] = useState(false);
 
   if (showAdmin) return <Admin />;
-    if (window.location.pathname === '/admin') return <Admin />;
   const [products, setProducts] = useState([]);
 
   const [selectedProduct, setSelectedProduct] = useState(null);
