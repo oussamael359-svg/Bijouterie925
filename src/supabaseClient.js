@@ -1,9 +1,10 @@
 import { createClient } from '@supabase/supabase-js'
 
-// حط هنا الـ URL اللي نسختي من Supabase
-const supabaseUrl = 'https://tviqqepzodiikcrjsdgd.supabase.co'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
-// حط هنا المفتاح anon public key الطويل اللي نسختي
-const supabaseAnonKey = 'حط_المفتاح_الطويل_هنا'
+if (!supabaseUrl || !supabasePublishableKey) {
+  throw new Error('بيانات Supabase غير معرفة في ملف .env.local')
+}
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey) 
+export const supabase = createClient(supabaseUrl, supabasePublishableKey)
