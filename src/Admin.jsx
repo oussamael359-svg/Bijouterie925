@@ -1,5 +1,5 @@
 import React from 'react';
-
+import { supabase } from './supabaseClient';
 export default function Admin({ onBackToStore }) {
   return (
     <div style={{ padding: '20px', color: '#fff', backgroundColor: '#111', minHeight: '100vh' }}>
